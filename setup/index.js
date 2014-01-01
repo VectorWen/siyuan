@@ -1,42 +1,71 @@
 var _ = require('underscore'),
+	chance = new (require('chance'))(),
 	execsql = require('execsql'),
 	config = require('../config'),
 	isTest = config.isTest,
 	connConfig = config.db.connection,
+	dbName = connConfig.database,
 	User = require('../models/user'),
-	Users = User.Collection,
-	numUsers = 200,
-	users = Users.forge(),
-	sqlFile = __dirname + '/db' + (isTest ? '_test' : '') + '.sql';
+	UserFriendship = require('../models/user-friendship'),
+	Users = User.Set,
+	numUsers = 100,
+	sqlFile = __dirname + '/db.sql',
+	users;
 
-// create databases
-execsql.config(connConfig).exec(sqlFile, function(err, results){
-	if (err) {
-		throw err;
-	}
-	console.log('database has been setup');
-	if (isTest) {
-		addRecords();
-	} else {
-		process.exit();
-	}
-});
+// create database for test
+execsql.config(connConfig)
+	.exec([
+	'DROP SCHEMA IF EXISTS ' + dbName,
+	'CREATE SCHEMA ' + dbName,
+	'USE ' + dbName
+].join('; '), function (err) {
+		if (err) throw err;
+		execsql.execFile(sqlFile, function (err) {
+			if (err) throw err;
+			console.log('database setup');
+			if (isTest) {
+				createUsers()
+					.then(attachFriends)
+					.then(done);
+			} else {
+				done();
+			}
+		});
+	});
 
-function addRecords() {
-	// add a set of random users
-	var user;
+function attachFriends() {
+	return users
+		.mapThen(function (user) {
+			var p = f(user);
+			_.times(_.random(2, 5), function () {
+				p = p.then(f);
+			});
+			return p;
+		}).then(function () {
+			console.log('friends attached');
+		});
+	function f(user) {
+		var friendid = _.random(1, numUsers);
+		return UserFriendship
+			.addFriendship(user.id, friendid, chance.word())
+			.then(function () {
+				return user;
+			});
+	}
+}
+
+function createUsers() {
+	users = Users.forge();
 	_.times(numUsers, function (i) {
 		users.add(User.randomForge());
 	});
+	return users.invokeThen('register')
+		.then(function () {
+			console.log('%d users created', numUsers);
+		});
+}
 
-	// save into database
-	users.invokeThen('save').then(function () {
-		if (!_.every(users.model, function (m) {
-			return m.id;
-		})) {
-			return console.log('failed');
-		}
-		console.log('%d records inserted', numUsers);
-		process.exit();
-	});
+function done() {
+	execsql.end();
+	process.exit();
 }

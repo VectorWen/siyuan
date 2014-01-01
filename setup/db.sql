@@ -2,16 +2,13 @@ SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL,ALLOW_INVALID_DATES';
 
-DROP SCHEMA IF EXISTS `siyuan` ;
-CREATE SCHEMA IF NOT EXISTS `siyuan` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci ;
-USE `siyuan` ;
 
 -- -----------------------------------------------------
--- Table `siyuan`.`users`
+-- Table `users`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `siyuan`.`users` ;
+DROP TABLE IF EXISTS `users` ;
 
-CREATE TABLE IF NOT EXISTS `siyuan`.`users` (
+CREATE TABLE IF NOT EXISTS `users` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `username` VARCHAR(45) NULL,
   `password` VARCHAR(45) NULL,
@@ -22,39 +19,71 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `siyuan`.`user_profile`
+-- Table `user_profiles`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `siyuan`.`user_profile` ;
+DROP TABLE IF EXISTS `user_profiles` ;
 
-CREATE TABLE IF NOT EXISTS `siyuan`.`user_profile` (
+CREATE TABLE IF NOT EXISTS `user_profiles` (
   `id` INT NOT NULL AUTO_INCREMENT,
-  `name` VARCHAR(45) NULL,
+  `userid` INT NULL,
   `email` VARCHAR(45) NULL,
-  `sex` TINYINT(1) NULL,
+  `nickname` VARCHAR(45) NULL,
+  `name` VARCHAR(45) NULL,
+  `gender` ENUM('m','f') NULL,
   `age` TINYINT NULL,
+  `grade` YEAR NULL,
   `university` VARCHAR(45) NULL,
   `major` VARCHAR(45) NULL,
   PRIMARY KEY (`id`),
-  CONSTRAINT `fk_user_profile_1`
-    FOREIGN KEY (`id`)
-    REFERENCES `siyuan`.`users` (`id`)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE)
+  INDEX `id_idx` (`userid` ASC),
+  CONSTRAINT `fk_user_profiles_1`
+    FOREIGN KEY (`userid`)
+    REFERENCES `users` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `siyuan`.`admin`
+-- Table `admin`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `siyuan`.`admin` (
+DROP TABLE IF EXISTS `admin` ;
+
+CREATE TABLE IF NOT EXISTS `admin` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `username` VARCHAR(45) NULL,
   `password` VARCHAR(45) NULL,
   `email` VARCHAR(45) NULL,
-  `regdate` DATETIME NULL,
+  `regtime` DATETIME NULL,
   `lastip` VARCHAR(45) NULL,
-  `lastdate` DATETIME NULL,
+  `lasttime` DATETIME NULL,
   PRIMARY KEY (`id`))
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `user_friendship`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `user_friendship` ;
+
+CREATE TABLE IF NOT EXISTS `user_friendship` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `userid` INT NULL,
+  `friendid` INT NULL,
+  `markname` VARCHAR(45) NULL,
+  PRIMARY KEY (`id`),
+  INDEX `fk_user_friendship_1_idx` (`userid` ASC),
+  INDEX `fk_user_friendship_2_idx` (`friendid` ASC),
+  CONSTRAINT `fk_user_friendship_1`
+    FOREIGN KEY (`userid`)
+    REFERENCES `users` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_user_friendship_2`
+    FOREIGN KEY (`friendid`)
+    REFERENCES `users` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
 
